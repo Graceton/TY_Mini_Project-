@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optivox | Downloads</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --accent: #00ffcc;
+      --bg-dark: #0b0e19;
+      --bg-card: #15192f;
+      --text-primary: #f5f6fa;
+      --text-soft: #cfd3e6;
+      --shadow-light: rgba(0, 255, 204, 0.2);
+      --shadow-glow: rgba(0, 255, 204, 0.4);
+      --btn-bg: #4e54c8;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    /* Magnifier Elements */
+    #magnifier {
+      position: fixed;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: none;
+      z-index: 999999;
+      pointer-events: none;
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 25px var(--shadow-glow);
+    }
+
+    #magnifierContent {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: top left;
+    }
+
+    /* Navbar */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 70px;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(0, 255, 204, 0.2);
+    }
+
+    nav h2 {
+      letter-spacing: 3px;
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 28px;
+      text-shadow: 0 0 10px var(--accent);
+    }
+
+    nav a {
+      margin: 0 15px;
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    nav a.active,
+    nav a:hover,
+    nav a:focus {
+      color: var(--accent);
+      text-shadow: 0 0 12px var(--accent);
+      outline: none;
+      font-weight: 600;
+    }
+
+
+    .platforms i {
+      color: var(--accent);
+      margin-right: 8px;
+      font-size: 1.3em;
+    }
+
+
+    /* Hero */
+    .hero {
+      padding-top: 120px;
+      padding-bottom: 60px;
+      text-align: center;
+      background: linear-gradient(180deg, #10142a, #0b0e19);
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 5vw, 3.5rem);
+      color: var(--accent);
+      margin-bottom: 20px;
+      text-shadow: 0 0 20px var(--accent);
+      animation: fadeDown 1.2s ease forwards;
+    }
+
+    .hero p {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      max-width: 900px;
+      margin: auto;
+      color: var(--text-soft);
+      line-height: 1.8;
+      animation: fadeUp 1.2s ease forwards;
+    }
+
+    @keyframes fadeDown {
+      0% {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeUp {
+      0% {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Download Cards */
+    .cards-section {
+      padding: 80px 10%;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 40px;
+      justify-items: center;
+    }
+
+    .card {
+      background: var(--bg-card);
+      padding: 40px 20px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px var(--shadow-light);
+      transition: all 0.3s ease;
+      text-align: center;
+      width: 250px;
+    }
+
+    .card h3 {
+      color: var(--accent);
+      margin: 15px 0;
+    }
+
+    .card img {
+      width: 80px;
+    }
+
+    .card a {
+      display: inline-block;
+      background: var(--btn-bg);
+      padding: 10px 25px;
+      border-radius: 20px;
+      text-decoration: none;
+      color: white;
+      margin-top: 10px;
+      transition: 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 0 35px var(--shadow-glow);
+    }
+
+    .card:hover a {
+      background: var(--accent);
+      color: var(--bg-dark);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 30px;
+      background: rgba(0, 0, 0, 0.5);
+      color: #bbb;
+      font-size: 14px;
+      border-top: 1px solid rgba(0, 255, 204, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    footer:hover {
+      color: var(--accent);
+      text-shadow: 0 0 10px var(--accent);
+    }
+
+    /* Responsive */
+    @media (max-width:768px) {
+      nav {
+        padding: 15px 25px;
+      }
+
+      .cards-section {
+        gap: 25px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Magnifier -->
+  <div id="magnifier">
+    <div id="magnifierContent"></div>
+  </div>
+
+  <!-- Navbar -->
+  <nav>
+    <h2>OPTIVOX</h2>
+    <div>
+      <a href="homepage.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="features.html">Features</a>
+      <a href="downloads.html" class="active">Downloads</a>
+      <a href="team.html">Team</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1>Download Optivox</h1>
+    <p>Choose your platform and experience accessibility redefined.</p>
+  </section>
+
+  <!-- Download Cards -->
+  <section class="cards-section">
+    <div class="card">
+      <img src="/IMages/windows-10-icon.svg" alt="Windows Logo" style="width:80px;">
+      <h3>Windows</h3>
+      <a href="Optivox.zip" download>Download</a>
+    </div>
+    <div class="card">
+      <img src="https://cdn-icons-png.flaticon.com/512/888/888841.png" alt="macOS Logo" style="width:80px;">
+      <h3>macOS</h3>
+      <a href="#">Download</a>
+    </div>
+    <div class="card">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg" alt="Linux Logo" style="width:80px;">
+      <h3>Linux</h3>
+      <a href="#">Download</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    © 2025 OPTIVOX | Developed by Team Optivox
+  </footer>
+
+  <!-- Card Hover Script -->
+  <script>
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+      card.addEventListener('mouseover', () => {
+        card.style.transform = 'translateY(-10px)';
+        card.style.boxShadow = '0 0 35px rgba(0,255,204,0.4)';
+      });
+      card.addEventListener('mouseout', () => {
+        card.style.transform = 'translateY(0px)';
+        card.style.boxShadow = '0 0 20px rgba(0,255,204,0.2)';
+      });
+    });
+  </script>
+
+  <!-- Magnifier Script -->
+  <script src="js/magnifier.js"></script>
+
+</body>
+
+</html>

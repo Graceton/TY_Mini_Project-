@@ -1,0 +1,11 @@
+1. Packaging
+Build an .exe using PyInstaller.
+deployable product.
+
+2. Accessibility compliance
+WCAG principles
+Screen-reader compatibility
+Contrast ratios
+Keyboard-only control
+
+3. 

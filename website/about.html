@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Optivox | About</title>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ===================== */
+/* VARIABLES & BASE SETUP */
+/* ===================== */
+:root {
+  --accent: #00ffcc;
+  --bg-dark: #0b0e19;
+  --bg-card: #15192f;
+  --text-primary: #f5f6fa;
+  --text-soft: #cfd3e6;
+  --shadow-light: rgba(0,255,204,0.2);
+  --shadow-glow: rgba(0,255,204,0.4);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+body {
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* ===================== */
+/* NAVBAR */
+/* ===================== */
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 70px;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(10px);
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid rgba(0,255,204,0.2);
+}
+
+nav h2 {
+  letter-spacing: 3px;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 28px;
+  text-shadow: 0 0 10px var(--accent);
+}
+
+nav a {
+  margin: 0 15px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+nav a:hover,
+nav a:focus {
+  color: var(--accent);
+  text-shadow: 0 0 8px var(--accent);
+  outline: none;
+}
+
+/* Active link highlight */
+nav a.active {
+  color: var(--accent);
+  font-weight: 600;
+  text-shadow: 0 0 12px var(--accent);
+}
+
+/* ===================== */
+/* HERO SECTION */
+/* ===================== */
+.hero {
+  padding-top: 120px;
+  padding-bottom: 60px;
+  text-align: center;
+  background: linear-gradient(180deg,#10142a,#0b0e19);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero h1 {
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  color: var(--accent);
+  margin-bottom: 20px;
+  text-shadow: 0 0 20px var(--accent);
+  animation: fadeDown 1.2s ease forwards;
+}
+
+.hero p {
+  font-size: clamp(1rem,2vw,1.25rem);
+  max-width: 900px;
+  margin: auto;
+  color: #d6d6d6;
+  line-height: 1.8;
+  animation: fadeUp 1.2s ease forwards;
+}
+
+/* Keyframe Animations */
+@keyframes fadeDown {
+  0% { opacity:0; transform: translateY(-30px);}
+  100% { opacity:1; transform: translateY(0);}
+}
+@keyframes fadeUp {
+  0% { opacity:0; transform: translateY(30px);}
+  100% { opacity:1; transform: translateY(0);}
+}
+
+/* ===================== */
+/* CONTENT CARDS */
+/* ===================== */
+.cards-section {
+  padding: 80px 10%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(320px,1fr));
+  gap: 40px;
+}
+
+.card {
+  background: var(--bg-card);
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 0 20px var(--shadow-light);
+  transition: all 0.3s ease;
+}
+
+.card h2 {
+  color: var(--accent);
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+}
+
+.card p,
+.card ul {
+  color: var(--text-soft);
+  line-height: 1.7;
+}
+
+.card ul {
+  margin-left: 20px;
+  list-style: square;
+}
+
+.card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 0 35px var(--shadow-glow);
+}
+
+/* ===================== */
+/* IMAGE SECTION */
+/* ===================== */
+.image-section {
+  padding: 60px 10%;
+  text-align: center;
+  background: linear-gradient(180deg, var(--bg-dark), #10142a);
+}
+
+.image-section h2 {
+  color: var(--accent);
+  font-size: clamp(2rem,3vw,2.5rem);
+  margin-bottom: 30px;
+  text-shadow: 0 0 15px var(--accent);
+}
+
+.image-section img {
+  width: 80%;
+  border-radius: 20px;
+  box-shadow: 0 0 25px var(--shadow-light);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.image-section img:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 35px var(--shadow-glow);
+}
+
+/* ===================== */
+/* FOOTER */
+/* ===================== */
+footer {
+  text-align: center;
+  padding: 30px;
+  background: rgba(0,0,0,0.5);
+  color: #bbb;
+  font-size: 14px;
+  border-top: 1px solid rgba(0,255,204,0.2);
+  transition: all 0.3s ease;
+}
+
+footer:hover {
+  color: var(--accent);
+  text-shadow: 0 0 10px var(--accent);
+}
+
+/* ===================== */
+/* MEDIA QUERIES */
+/* ===================== */
+@media (max-width:768px) {
+  nav { padding:15px 25px; }
+  .cards-section { gap:25px; }
+}
+
+/* ===================== */
+/* INTERACTIONS (JS Fallback for reduced motion) */
+/* ===================== */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+
+<body>
+
+    <!-- Magnifier Elements -->
+<div id="magnifier">
+  <div id="magnifierContent"></div>
+</div>
+
+<!-- NAVBAR -->
+<nav>
+  <h2>OPTIVOX</h2>
+  <div>
+    <a href="homepage.html">Home</a>
+    <a href="about.html" class="active">About</a>
+    <a href="features.html">Features</a>
+    <a href="downloads.html">Downloads</a>
+    <a href="team.html">Team</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <h1>About Optivox</h1>
+  <p>Optivox is a desktop-based AI assistant designed to enhance digital accessibility for visually impaired users. It seamlessly integrates <b>Magnifier</b>, <b>OCR</b>, and <b>Text-to-Speech</b> into one intelligent, offline platform — built entirely in Python with real-time performance and simplicity.</p>
+</section>
+
+<!-- MAIN CONTENT -->
+<section class="cards-section">
+  <div class="card">
+    <h2>📖 Abstract</h2>
+    <p>Optivox integrates a <b>magnifier</b>, <b>OCR engine</b>, and <b>text-to-speech (TTS)</b> into one unified application. It enables visually impaired users to read, navigate, and interact with their computers independently, without relying on internet connectivity. Built using <b>Python</b> and <b>PyQt</b>, it offers an offline and modular experience for accessible computing.</p>
+  </div>
+
+  <div class="card">
+    <h2>💡 Motivation</h2>
+    <p>Visually impaired users often struggle to use computers independently. Existing assistive tools like screen readers, magnifiers, and OCR work separately — causing confusion, slower performance, and accessibility gaps. Many are also expensive or limited to specific operating systems. Optivox was created to bridge these gaps with a single, free, open-source, and intelligent accessibility tool.</p>
+  </div>
+
+  <div class="card">
+    <h2>⚠ Problem Statement</h2>
+    <p>Visually impaired individuals face significant challenges in reading small text or performing computer-based operations. Current magnifiers and screen readers lack integration and require complex manual steps. This increases dependency on others and limits confidence. Optivox aims to eliminate this dependency by providing an integrated, voice-assisted, and real-time accessibility solution.</p>
+  </div>
+
+  <div class="card">
+    <h2>🎯 Objectives</h2>
+    <ul>
+      <li>Combine <b>Magnifier, OCR,</b> and <b>TTS</b> in one unified interface.</li>
+      <li>Provide <b>real-time performance</b> with minimal lag.</li>
+      <li>Enable <b>offline functionality</b> using Tesseract & pyttsx3.</li>
+      <li>Offer <b>voice and keyboard control</b> for hands-free use.</li>
+      <li>Support <b>cross-platform operation</b> on Windows, macOS, and Linux.</li>
+      <li>Allow <b>customization</b> of voices, color themes, and magnification levels.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>🧩 Proposed System</h2>
+    <p>Optivox integrates multiple accessibility modules to create a seamless experience. Users can zoom, capture text, and hear content instantly using offline OCR and TTS. A floating control panel allows quick access to magnification and speech settings. The system auto-launches at startup and operates entirely offline — enhancing independence and reliability for users.</p>
+  </div>
+</section>
+
+<!-- IMAGE SECTION -->
+<section class="image-section">
+  <h2>System Architecture Snapshot</h2>
+  <img src="https://cdn.dribbble.com/users/72099/screenshots/4097223/media/80de89a03a8d1dc7033eaa98d7cb89ed.png?compress=1&resize=800x600" alt="System Architecture">
+</section>
+
+<!-- FOOTER -->
+<footer>
+  © 2025 OPTIVOX | Developed by Team Optivox
+</footer>
+
+<!-- CARD INTERACTIONS -->
+<script>
+const cards = document.querySelectorAll('.card');
+cards.forEach(card=>{
+  card.addEventListener('mouseover',()=>{
+    card.style.transform='translateY(-10px)';
+    card.style.boxShadow='0 0 35px rgba(0,255,204,0.4)';
+  });
+  card.addEventListener('mouseout',()=>{
+    card.style.transform='translateY(0px)';
+    card.style.boxShadow='0 0 20px rgba(0,255,204,0.2)';
+  });
+});
+</script>
+<script src="js/magnifier.js"></script>
+
+
+</body>
+</html>

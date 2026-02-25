@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Optivox | Team</title>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --accent: #00ffcc;
+  --bg-dark: #0b0e19;
+  --bg-card: #15192f;
+  --text-primary: #f5f6fa;
+  --text-soft: #cfd3e6;
+  --shadow-light: rgba(0,255,204,0.2);
+  --shadow-glow: rgba(0,255,204,0.4);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+body { background: var(--bg-dark); color: var(--text-primary); overflow-x:hidden; scroll-behavior:smooth; }
+
+nav {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:18px 70px; background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+  position: fixed; width: 100%; top: 0; z-index: 1000; border-bottom: 1px solid rgba(0,255,204,0.2);
+}
+
+nav h2 { letter-spacing:3px; color: var(--accent); font-weight:700; font-size:28px; text-shadow: 0 0 10px var(--accent); }
+nav a { margin:0 15px; color: var(--text-primary); text-decoration:none; font-weight:500; transition: all 0.3s ease; }
+nav a:hover, nav a:focus { color: var(--accent); text-shadow: 0 0 8px var(--accent); outline:none; }
+nav a.active { color: var(--accent); font-weight:600; text-shadow: 0 0 12px var(--accent); }
+
+.cards-section {
+  padding: 120px 10px 80px; 
+  display:flex; flex-wrap:wrap; justify-content:center; gap:40px;
+}
+
+.card {
+  background: var(--bg-card); padding:30px; border-radius:20px; width:250px;
+  box-shadow:0 0 20px var(--shadow-light); transition: all 0.3s ease; text-align:center;
+}
+
+.card img { width:100%; border-radius:15px; margin-bottom:15px; }
+.card h3 { color: var(--accent); margin-bottom:8px; }
+.card p { color: var(--text-soft); line-height:1.6; }
+
+.card:hover { transform: translateY(-10px); box-shadow:0 0 35px var(--shadow-glow); }
+
+.hero-section {
+  text-align:center; padding-top:120px; margin-bottom:50px;
+}
+
+.hero-section h1 { font-size:clamp(2.5rem, 5vw, 3rem); color: var(--accent); margin-bottom:20px; text-shadow: 0 0 15px var(--accent); }
+
+footer {
+  text-align:center; padding:30px; background: rgba(0,0,0,0.5); color:#bbb; font-size:14px; border-top:1px solid rgba(0,255,204,0.2);
+}
+footer:hover { color: var(--accent); text-shadow: 0 0 10px var(--accent); }
+</style>
+</head>
+
+<body>
+
+<!-- Magnifier Elements -->
+<div id="magnifier"><div id="magnifierContent"></div></div>
+
+<!-- NAVBAR -->
+<nav>
+  <h2>OPTIVOX</h2>
+  <div>
+    <a href="homepage.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="features.html">Features</a>
+    <a href="downloads.html">Downloads</a>
+    <a href="team.html" class="active">Team</a>
+  </div>
+</nav>
+
+<section class="hero-section">
+  <h1>Meet Our Team</h1>
+</section>
+
+<section class="cards-section">
+  <div class="card">
+    <img src="/Images/Advik.png" alt="Advik">
+    <h3>Advik Saxena</h3>
+    <p>Lead Developer | Accessibility & AI Integration Specialist</p>
+  </div>
+  <div class="card">
+    <img src="/Images/Pratham.png" alt="Pratham">
+    <h3>Pratham Pawar</h3>
+    <p>Frontend Designer | UI/UX Developer</p>
+  </div>
+  <div class="card">
+    <img src="https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=500&q=80" alt="Graceton">
+    <h3>Graceton Santhmayor</h3>
+    <p>Research Analyst | OCR & TTS Implementation</p>
+  </div>
+  <div class="card">
+    <img src="/Images/Sarvesh.png" alt="Sarvesh">
+    <h3>Sarvesh Shinde</h3>
+    <p>Software Tester | System Integration Engineer</p>
+  </div>
+</section>
+
+<footer>
+  © 2025 OPTIVOX | Developed by Team Optivox
+</footer>
+
+<script src="js/magnifier.js"></script>
+</body>
+</html>

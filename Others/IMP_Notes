@@ -1,0 +1,1 @@
+py -m pip install opencv-python PyQt5 pytesseract pyttsx3 pyautogui numpy keyboard pyperclip requests sounddevice google-genai
