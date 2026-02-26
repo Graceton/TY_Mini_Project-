@@ -6,12 +6,46 @@ from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QPushBut
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont
 
+import sys
+import os
+import queue
+import threading
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from settings.settings import SettingsManager
+
+class TTSWorker(threading.Thread):
+    def __init__(self, rate, volume):
+        super().__init__(daemon=True)
+        self.q = queue.Queue()
+        self.rate = rate
+        self.volume = volume
+
+    def run(self):
+        import pythoncom
+        pythoncom.CoInitialize()
+        import pyttsx3
+        engine = pyttsx3.init()
+        engine.setProperty("rate", self.rate)
+        engine.setProperty("volume", self.volume)
+
+        while True:
+            text = self.q.get()
+            if text is None: break
+            engine.say(text)
+            engine.runAndWait()
+            self.q.task_done()
+
+
 class ReaderThread(QThread):
     speak_signal = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
-        self.engine = pyttsx3.init()
+        self.settings = SettingsManager()
+        self.tts_worker = TTSWorker(self.settings.get("speech_rate"), self.settings.get("speech_volume"))
+        self.tts_worker.start()
+        
         self.running = True
         self.last_text = ""
         self.is_reading = False
@@ -27,8 +61,10 @@ class ReaderThread(QThread):
                     if text and text != self.last_text:
                         self.last_text = text
                         self.is_reading = True
-                        self.engine.say(text)
-                        self.engine.runAndWait()
+                        self.tts_worker.q.put(text)
+                        
+                        # Artificially toggle reading state based on length roughly
+                        time.sleep(len(text) * 0.05)
                         self.is_reading = False
             except Exception as e:
                 print(f"Reader error: {e}")
@@ -38,8 +74,7 @@ class ReaderThread(QThread):
 
     def stop(self):
         self.running = False
-        if self.is_reading:
-            self.engine.stop()
+        self.tts_worker.q.put(None)
 
 class SelectReader(QWidget):
     def __init__(self):
@@ -108,9 +143,12 @@ class SelectReader(QWidget):
         self.thread.start()
 
     def stop_reading(self):
-        """Stop current reading"""
+        """Stop current reading by wiping the queue and passing empty string"""
         if self.thread.is_reading:
-            self.thread.engine.stop()
+            # Clear queue
+            with self.thread.tts_worker.q.mutex:
+                self.thread.tts_worker.q.queue.clear()
+            self.thread.is_reading = False
 
     def closeEvent(self, event):
         self.thread.stop()

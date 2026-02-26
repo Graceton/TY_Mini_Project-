@@ -15,6 +15,9 @@ if getattr(sys, 'frozen', False):
     import magnifier.full_window_magnifier
     import magnifier.hover_magnifier
     import reader.select_reader
+    import reader.hover_reader
+    import reader.full_reader
+    import reader.ocr_reader
     import voice_assistant.ui_assistant
 
 from PyQt5.QtWidgets import (
@@ -23,6 +26,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt, QEvent, QPoint
+from settings.settings import SettingsManager, SettingsWindow
 
 
 class AccessibilityApp(QWidget):
@@ -31,6 +35,8 @@ class AccessibilityApp(QWidget):
         self.magnifier_process = None
         self.reader_process = None
         self.voice_process = None  # now handled as separate process
+        self.settings_manager = SettingsManager()
+        self.settings_window = None
         self.initUI()
 
     def createButton(self, emoji, tooltip, color, size=60):
@@ -76,21 +82,20 @@ class AccessibilityApp(QWidget):
         self.zoom_btn = self.createButton("🔍", "Zoom Options", "#3498db")
         self.reader_btn = self.createButton("🔊", "Reader Options (Tab+R)", "#2ecc71")
         self.voice_btn = self.createButton("🎙️", "Voice Assistant", "#e74c3c")
-        self.settings_btn = self.createButton("⚙️", "Settings", "#95a5a6", 50)
+        self.settings_btn = self.createButton("⚙️", "Settings", "#7c37cd", 50)
         self.exit_btn = self.createButton("❌", "Exit / Minimize", "#2c3e50", 50)
 
         # Sub-menus
         self.zoom_options = self.createZoomOptions()
         self.reader_options = self.createReaderOptions()
         self.voice_options = self.createVoiceOptions()
-        self.settings_options = self.createSettingsOptions()
         self.exit_options = self.createExitOptions()
 
         # Connect buttons
         self.zoom_btn.clicked.connect(self.expandZoomButtons)
         self.reader_btn.clicked.connect(lambda: self.toggleMenu(self.reader_options))
         self.voice_btn.clicked.connect(lambda: self.toggleMenu(self.voice_options))
-        self.settings_btn.clicked.connect(lambda: self.toggleMenu(self.settings_options))
+        self.settings_btn.clicked.connect(self.open_settings)
         self.exit_btn.clicked.connect(lambda: self.toggleMenu(self.exit_options))
 
         # Layout
@@ -101,7 +106,6 @@ class AccessibilityApp(QWidget):
         self.layout.addWidget(self.voice_btn)
         self.layout.addLayout(self.voice_options)
         self.layout.addWidget(self.settings_btn)
-        self.layout.addLayout(self.settings_options)
         self.layout.addWidget(self.exit_btn)
         self.layout.addLayout(self.exit_options)
 
@@ -116,9 +120,9 @@ class AccessibilityApp(QWidget):
         self.zoom_btn.setVisible(False)
 
         zoom_inline_layout = QHBoxLayout()
-        plus_btn = self.createButton("➕", "Zoom In", "#2980b9", 50)
-        reset_btn = self.createButton("🔄", "Reset Zoom", "#2980b9", 50)
-        minus_btn = self.createButton("➖", "Zoom Out", "#2980b9", 50)
+        plus_btn = self.createButton("+", "Zoom In", "#3498db", 50)
+        reset_btn = self.createButton("🔄", "Reset Zoom", "#3498db", 50)
+        minus_btn = self.createButton("-", "Zoom Out", "#3498db", 50)
 
         for btn in [plus_btn, reset_btn, minus_btn]:
             zoom_inline_layout.addWidget(btn)
@@ -202,14 +206,18 @@ class AccessibilityApp(QWidget):
     # Reader Handling
     # ==========================
 
-    def start_select_reader(self):
-        if self.reader_process is None or self.reader_process.poll() is not None:
-            if getattr(sys, 'frozen', False):
-                cmd = [sys.executable, "--run-module", "reader.select_reader"]
-            else:
-                cmd = [sys.executable, "reader/select_reader.py"]
-            self.reader_process = subprocess.Popen(cmd)
-            self.showMinimized()
+    def launch_reader(self, script_path):
+        if self.reader_process and self.reader_process.poll() is None:
+            self.reader_process.terminate()
+            
+        if getattr(sys, 'frozen', False):
+            module_name = script_path.replace('/', '.').replace('\\', '.').replace('.py', '')
+            cmd = [sys.executable, "--run-module", module_name]
+        else:
+            cmd = [sys.executable, script_path]
+            
+        self.reader_process = subprocess.Popen(cmd)
+        self.showMinimized()
 
     # ==========================
     # Voice Assistant Handling
@@ -258,9 +266,9 @@ class AccessibilityApp(QWidget):
 
     def createZoomOptions(self):
         layout = QHBoxLayout()
-        upper = self.createButton("🪟", "Upper Window Magnifier", "#2980b9", 50)
-        full = self.createButton("🖥️", "Full Window + Cursor Navigation", "#2980b9", 50)
-        hover = self.createButton("🖱️", "Hover Zoom Mode", "#2980b9", 50)
+        upper = self.createButton("🪟", " Magnifier Window", "#3498db", 50)
+        full = self.createButton("⛶", "Full Window Magnifier", "#3498db", 50)
+        hover = self.createButton("🖱️", "Hover Magnifier", "#3498db", 50)
         for btn in [upper, full, hover]:
             btn.setVisible(False)
             layout.addWidget(btn)
@@ -268,10 +276,19 @@ class AccessibilityApp(QWidget):
 
     def createReaderOptions(self):
         layout = QHBoxLayout()
-        select = self.createButton("📋", "Select to Read (Ctrl+C)", "#27ae60", 50)
-        select.clicked.connect(self.start_select_reader)
-        select.setVisible(False)
-        layout.addWidget(select)
+        hover = self.createButton("🖱️", "Hover to Read", "#27ae60", 50)
+        para = self.createButton("�", "Paragraph Selection", "#27ae60", 50)
+        line = self.createButton("📏", "Line-wise Reader", "#27ae60", 50)
+        ocr = self.createButton("📷", "OCR Overlay", "#27ae60", 50)
+        
+        hover.clicked.connect(lambda: self.launch_reader("reader/hover_reader.py"))
+        para.clicked.connect(lambda: self.launch_reader("reader/select_reader.py"))
+        line.clicked.connect(lambda: self.launch_reader("reader/full_reader.py"))
+        ocr.clicked.connect(lambda: self.launch_reader("reader/ocr_reader.py"))
+        
+        for btn in [hover, para, line, ocr]:
+            btn.setVisible(False)
+            layout.addWidget(btn)
         return layout
 
     def createVoiceOptions(self):
@@ -285,9 +302,10 @@ class AccessibilityApp(QWidget):
             layout.addWidget(btn)
         return layout
 
-    def createSettingsOptions(self):
-        layout = QHBoxLayout()
-        return layout
+    def open_settings(self):
+        if not self.settings_window or not self.settings_window.isVisible():
+            self.settings_window = SettingsWindow(self.settings_manager)
+            self.settings_window.show()
 
     def createExitOptions(self):
         layout = QHBoxLayout()
@@ -315,8 +333,6 @@ class AccessibilityApp(QWidget):
             self.reader_process.terminate()
         if self.voice_process and self.voice_process.poll() is None:
             self.voice_process.terminate()
-        event.accept()
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

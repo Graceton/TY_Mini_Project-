@@ -6,14 +6,20 @@ from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QMenu, QAction, QSyst
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal
 from PyQt5.QtGui import QImage, QPixmap, QIcon
 import threading
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from settings.settings import SettingsManager
 
 class ScreenMagnifier(QWidget):
     exit_signal = pyqtSignal()
 
     def __init__(self):
         super().__init__()
-        self.scale_factor = 2.5
-        self.zoom_increment = 0.5
+        self.settings = SettingsManager()
+        self.scale_factor = self.settings.get("default_zoom")
+        self.zoom_increment = self.settings.get("zoom_step")
         self.running = True
 
         self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
@@ -87,6 +93,10 @@ class ScreenMagnifier(QWidget):
 
         magnified_frame = frame[y1:y2, x1:x2]
         
+        # Apply inversion if toggled
+        if self.settings.get("invert_magnifier"):
+            magnified_frame = cv2.bitwise_not(magnified_frame)
+
         if magnified_frame.shape[0] > 0 and magnified_frame.shape[1] > 0:
             magnified_frame = cv2.resize(magnified_frame, (target_w, target_h))
 
@@ -96,11 +106,16 @@ class ScreenMagnifier(QWidget):
             pixmap = QPixmap.fromImage(qImg)
             self.label.setPixmap(pixmap)
             
-        # Offset slightly so the mouse can still click underneath
-        self.move(mx + 20, my + 20)
+        # Offset sufficiently to avoid infinite mirror capture
+        offset_x, offset_y = 160, 110
+        if mx + offset_x + target_w > pyautogui.size().width:
+            offset_x = -target_w - 20
+        if my + offset_y + target_h > pyautogui.size().height:
+            offset_y = -target_h - 20
+        self.move(int(mx + offset_x), int(my + offset_y))
 
     def zoom_in(self):
-        self.scale_factor = min(self.scale_factor + self.zoom_increment, 5)
+        self.scale_factor = min(self.scale_factor + self.zoom_increment, 10.0)
         self.update()
 
     def zoom_out(self):

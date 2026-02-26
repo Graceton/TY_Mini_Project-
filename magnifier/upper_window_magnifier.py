@@ -6,14 +6,21 @@ from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QPoint
 from PyQt5.QtGui import QPixmap, QImage, QIcon
 import cv2
 import threading
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from settings.settings import SettingsManager
 
 class UpperWindowMagnifier(QWidget):
     exit_signal = pyqtSignal()
 
     def __init__(self):
         super().__init__()
-        self.scale_factor = 2.5
-        self.zoom_increment = 0.5
+        self.settings = SettingsManager()
+        self.scale_factor = self.settings.get("default_zoom")
+        self.zoom_increment = self.settings.get("zoom_step")
+        
         self.dragging = False
         self.offset = QPoint()
         self.running = True
@@ -97,13 +104,17 @@ class UpperWindowMagnifier(QWidget):
         # Resize to overlay window size
         magnified = cv2.resize(magnified, (self.width_size, self.height_size))
 
+        # Apply inversion if toggled
+        if self.settings.get("invert_magnifier"):
+            magnified = cv2.bitwise_not(magnified)
+            
         h, w, _ = magnified.shape
         image = QImage(magnified.data, w, h, QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(image)
         self.label.setPixmap(pixmap)
 
     def zoom_in(self):
-        self.scale_factor = min(self.scale_factor + self.zoom_increment, 5)
+        self.scale_factor = min(self.scale_factor + self.zoom_increment, 10.0)
 
     def zoom_out(self):
         self.scale_factor = max(1.0, self.scale_factor - self.zoom_increment)

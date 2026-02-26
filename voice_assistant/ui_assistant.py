@@ -14,16 +14,26 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont
 
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from settings.settings import SettingsManager
+
 # Import backend chatbot
-from assistant import MultilingualChatbot
+try:
+    from assistant import MultilingualChatbot
+except ImportError:
+    from voice_assistant.assistant import MultilingualChatbot
 
 class LocalTTS:
     """Handles free local TTS for system alerts using pyttsx3 to save Sarvam credits."""
     @staticmethod
     def _speak_process(text):
         """Runs in an isolated process to prevent pyttsx3 COM/threading crashes."""
+        settings = SettingsManager()
         engine = pyttsx3.init()
-        engine.setProperty('rate', 150)
+        engine.setProperty('rate', settings.get("speech_rate"))
+        engine.setProperty('volume', settings.get("speech_volume"))
         engine.say(text)
         engine.runAndWait()
         
@@ -45,11 +55,12 @@ class WakeWordWorker(QThread):
         self.is_active = True
         self.wake_words = [
             # Standard
-            "hey assistant", "hey optivox", "optivox", 
+            "hey assistant", "hey optivox", "optivox", "assistant", 
             # Phonetic mishearings by Google Speech Recognition
-            "optimax", "opti works", "optics box", "optimox", 
+            "optimax", "optic works", "optics box", "optimox", 
             "hey optimox", "hey optics box", "hey optics works", 
-            "hay optivox", "assistance", "heya sister", "optic box", "optics works"
+            "hay optivox", "assistance", "heya sister", "optic box", 
+            "optics works", " optiv", "day of the box", "hey of the box", 
         ]
 
     def run(self):

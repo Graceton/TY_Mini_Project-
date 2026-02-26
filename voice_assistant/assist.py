@@ -1,15 +1,23 @@
 import speech_recognition as sr
 import pyttsx3
 import time
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from settings.settings import SettingsManager
 
 class VoiceAssistant:
     def __init__(self):
         # Initialize speech recognition
         self.recognizer = sr.Recognizer()
         
+        # Load user setup
+        self.settings = SettingsManager()
+        
         # Text-to-speech settings (engine created per call)
-        self.speech_rate = 150
-        self.speech_volume = 0.9
+        self.speech_rate = self.settings.get("speech_rate")
+        self.speech_volume = self.settings.get("speech_volume")
         
         # Control flag
         self.should_stop = False

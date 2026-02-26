@@ -8,6 +8,11 @@ from PyQt5.QtWidgets import QApplication, QWidget, QMenu, QAction, QSystemTrayIc
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal
 from PyQt5.QtGui import QIcon
 
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from settings.settings import SettingsManager
+
 class POINT(ctypes.Structure):
     _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
 
@@ -24,8 +29,9 @@ class FullWindowMagnifier(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.scale_factor = 1.0
-        self.zoom_increment = 0.5
+        self.settings_manager = SettingsManager()
+        self.scale_factor = self.settings_manager.get("default_zoom")
+        self.zoom_increment = self.settings_manager.get("zoom_step")
         self.running = True
 
         # Initialize the native Windows magnifier engine
@@ -111,7 +117,7 @@ class FullWindowMagnifier(QWidget):
 
         mx, my = self.get_mouse_pos()
 
-        # Determine how large the screen appears inside the scaled viewport
+        
         view_w = self.screen_w / self.scale_factor
         view_h = self.screen_h / self.scale_factor
 
