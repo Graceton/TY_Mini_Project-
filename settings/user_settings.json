@@ -1,0 +1,13 @@
+{
+    "speech_rate": 170,
+    "speech_volume": 0.31,
+    "voice_name": "default",
+    "default_zoom": 1.0,
+    "zoom_step": 0.5,
+    "hover_width": 300,
+    "hover_height": 200,
+    "high_contrast": false,
+    "large_ui": true,
+    "invert_magnifier": true,
+    "ocr_language": "eng"
+}

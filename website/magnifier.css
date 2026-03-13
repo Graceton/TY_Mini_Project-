@@ -1,0 +1,101 @@
+/* =========================
+   Optivox Shared Magnifier & A11y
+   ========================= */
+
+:root {
+  --accent: #00ffcc;
+  --accent-2: #00d6ff;
+  --magnifier-size: 220px;
+}
+
+/* Magnifier Container */
+#magnifier {
+  position: fixed;
+  width: var(--magnifier-size);
+  height: var(--magnifier-size);
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 100000;
+  display: none;
+  box-shadow: 0 0 30px rgba(0, 255, 204, 0.4), inset 0 0 15px rgba(0, 0, 0, 0.5);
+  background: #060713;
+  transition: transform 0.1s ease-out, opacity 0.2s ease;
+}
+
+/* The actual magnified content area */
+#magnifierContent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Ensure current page images/elements are visible in clone */
+#magnifierContent * {
+  pointer-events: none !important;
+}
+
+/* Zoom Level Indicator Overlay */
+#zoomIndicator {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(6, 7, 19, 0.95);
+  color: var(--accent);
+  padding: 15px 35px;
+  border-radius: 50px;
+  font-size: 24px;
+  font-weight: 700;
+  z-index: 100001;
+  transition: opacity 0.3s;
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 40px rgba(0, 255, 204, 0.3);
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* Zoom Shortcut Tip */
+#zoomTip {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  background: rgba(6, 7, 19, 0.85);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  border: 1px solid rgba(0, 255, 204, 0.2);
+  z-index: 99999;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  backdrop-filter: blur(8px);
+}
+
+#zoomTip strong {
+  color: var(--accent);
+}
+
+/* Accessibility Support Classes */
+.a11y-high-contrast {
+  filter: contrast(1.5) brightness(1.1) !important;
+  background-color: #000 !important;
+}
+
+.a11y-large-font {
+  font-size: 1.15rem !important;
+}
+
+.a11y-large-font h1 { font-size: 3.5rem !important; }
+.a11y-large-font h2 { font-size: 2.5rem !important; }
+.a11y-large-font p { font-size: 1.3rem !important; }
+
+/* Accessible Focus States */
+a:focus, button:focus {
+  outline: 3px solid var(--accent) !important;
+  outline-offset: 4px !important;
+}

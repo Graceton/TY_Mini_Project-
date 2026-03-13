@@ -1,0 +1,286 @@
+1. Packaging
+Build an .exe using PyInstaller.
+deployable product.
+
+2. Accessibility compliance
+WCAG principles
+Screen-reader compatibility
+Contrast ratios
+Keyboard-only control
+
+
+new GUI:
+import sys
+import subprocess
+import runpy
+from PyQt5.QtWidgets import (
+    QApplication, QWidget, QPushButton, QVBoxLayout, QLabel,
+    QHBoxLayout, QSizePolicy, QGridLayout, QFrame
+)
+from PyQt5.QtGui import QFont, QPalette, QColor
+from PyQt5.QtCore import Qt, QEvent, QPoint, QTimer
+from settings.settings import SettingsManager, SettingsWindow
+
+
+if len(sys.argv) > 1 and sys.argv[1] == "--run-module":
+    module_name = sys.argv[2]
+    sys.argv = [sys.argv[0]] + sys.argv[3:]
+    runpy.run_module(module_name, run_name="__main__")
+    sys.exit(0)
+
+class AccessibilityApp(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.magnifier_process = None
+        self.reader_process = None
+        self.voice_process = None
+        self.settings_manager = SettingsManager()
+        self.settings_window = None
+        
+        # Track current state to avoid redundant stylesheet applications
+        self._last_hc = None
+        self._last_large = None
+        
+        self.initUI()
+        
+        # Live Settings Polling
+        self.poll_timer = QTimer(self)
+        self.poll_timer.timeout.connect(self.check_settings_updates)
+        self.poll_timer.start(1000) # Check every 1 second
+
+    def initUI(self):
+        self.setWindowTitle("OPTIVOX")
+        self.setMinimumSize(400, 300)
+        
+        # Main Layout
+        self.main_layout = QVBoxLayout()
+        self.setLayout(self.main_layout)
+
+        # Dashboard Grid for Responsiveness
+        self.grid = QGridLayout()
+        self.main_layout.addLayout(self.grid)
+
+        # Tooltip/Hover Label
+        self.hover_label = QLabel(self)
+        self.hover_label.setAlignment(Qt.AlignCenter)
+        self.hover_label.setFrameShape(QFrame.StyledPanel)
+        self.hover_label.setVisible(False)
+        self.main_layout.addWidget(self.hover_label)
+
+        # Primary Buttons
+        self.zoom_btn = self.create_nav_button("🔍", "Magnifiers", "#3498db")
+        self.reader_btn = self.create_nav_button("🔊", "Readers", "#2ecc71")
+        self.voice_btn = self.create_nav_button("🎙️", "Voice Assistant", "#e74c3c")
+        self.settings_btn = self.create_nav_button("⚙️", "Settings", "#7c37cd")
+        self.exit_btn = self.create_nav_button("❌", "Exit", "#2c3e50")
+
+        # Initial Grid Placement
+        self.grid.addWidget(self.zoom_btn, 0, 0)
+        self.grid.addWidget(self.reader_btn, 0, 1)
+        self.grid.addWidget(self.voice_btn, 1, 0)
+        self.grid.addWidget(self.settings_btn, 1, 1)
+        self.grid.addWidget(self.exit_btn, 2, 0, 1, 2) # Span across 2 columns
+
+        # Sub-Menus (Hidden initially)
+        self.setup_sub_menus()
+
+        # Connections
+        self.zoom_btn.clicked.connect(self.show_zoom_menu)
+        self.reader_btn.clicked.connect(self.show_reader_menu)
+        self.voice_btn.clicked.connect(self.show_voice_menu)
+        self.settings_btn.clicked.connect(self.open_settings)
+        self.exit_btn.clicked.connect(self.close)
+
+        self.apply_theme_and_scale()
+
+    def create_nav_button(self, emoji, text, color):
+        btn = QPushButton(f"{emoji}\n{text}")
+        btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        btn.installEventFilter(self)
+        btn.setProperty("base_color", color)
+        return btn
+
+    def setup_sub_menus(self):
+        # Zoom Options
+        self.zoom_back = QPushButton("⬅ Back")
+        self.zoom_upper = QPushButton("🪟 Upper Window")
+        self.zoom_full = QPushButton("⛶ Full Screen")
+        self.zoom_hover = QPushButton("🖱️ Hover")
+        self.zoom_widgets = [self.zoom_upper, self.zoom_full, self.zoom_hover, self.zoom_back]
+        
+        # Reader Options
+        self.reader_back = QPushButton("⬅ Back")
+        self.reader_hover = QPushButton("🖱️ Hover to Read")
+        self.reader_para = QPushButton("¶ Paragraph")
+        self.reader_line = QPushButton("📏 Line-wise")
+        self.reader_ocr = QPushButton("📷 OCR Overlay")
+        self.reader_widgets = [self.reader_hover, self.reader_para, self.reader_line, self.reader_ocr, self.reader_back]
+
+        # Voice Options
+        self.voice_back = QPushButton("⬅ Back")
+        self.voice_start = QPushButton("🎙️ Start Assistant")
+        self.voice_stop = QPushButton("🔇 Stop Assistant")
+        self.voice_widgets = [self.voice_start, self.voice_stop, self.voice_back]
+
+        for w in self.zoom_widgets + self.reader_widgets + self.voice_widgets:
+            w.setVisible(False)
+            w.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        # Sub-menu button connections
+        self.zoom_back.clicked.connect(self.restore_main_menu)
+        self.zoom_upper.clicked.connect(lambda: self.launch_magnifier("magnifier/upper_window_magnifier.py"))
+        self.zoom_full.clicked.connect(lambda: self.launch_magnifier("magnifier/full_window_magnifier.py"))
+        self.zoom_hover.clicked.connect(lambda: self.launch_magnifier("magnifier/hover_magnifier.py"))
+
+        self.reader_back.clicked.connect(self.restore_main_menu)
+        self.reader_hover.clicked.connect(lambda: self.launch_reader("reader/hover_reader.py"))
+        self.reader_para.clicked.connect(lambda: self.launch_reader("reader/select_reader.py"))
+        self.reader_line.clicked.connect(lambda: self.launch_reader("reader/full_reader.py"))
+        self.reader_ocr.clicked.connect(lambda: self.launch_reader("reader/ocr_reader.py"))
+
+        self.voice_back.clicked.connect(self.restore_main_menu)
+        self.voice_start.clicked.connect(self.start_voice_assistant)
+        self.voice_stop.clicked.connect(self.stop_voice_assistant)
+
+    def show_zoom_menu(self):
+        self.hide_main_buttons()
+        self.grid.addWidget(self.zoom_upper, 0, 0)
+        self.grid.addWidget(self.zoom_full, 0, 1)
+        self.grid.addWidget(self.zoom_hover, 1, 0)
+        self.grid.addWidget(self.zoom_back, 1, 1)
+        for w in self.zoom_widgets: w.setVisible(True)
+
+    def show_reader_menu(self):
+        self.hide_main_buttons()
+        self.grid.addWidget(self.reader_hover, 0, 0)
+        self.grid.addWidget(self.reader_para, 0, 1)
+        self.grid.addWidget(self.reader_line, 1, 0)
+        self.grid.addWidget(self.reader_ocr, 1, 1)
+        self.grid.addWidget(self.reader_back, 2, 0, 1, 2)
+        for w in self.reader_widgets: w.setVisible(True)
+
+    def show_voice_menu(self):
+        self.hide_main_buttons()
+        self.grid.addWidget(self.voice_start, 0, 0)
+        self.grid.addWidget(self.voice_stop, 0, 1)
+        self.grid.addWidget(self.voice_back, 1, 0, 1, 2)
+        for w in self.voice_widgets: w.setVisible(True)
+
+    def hide_main_buttons(self):
+        self.zoom_btn.setVisible(False)
+        self.reader_btn.setVisible(False)
+        self.voice_btn.setVisible(False)
+        self.settings_btn.setVisible(False)
+        self.exit_btn.setVisible(False)
+
+    def restore_main_menu(self):
+        for w in self.zoom_widgets + self.reader_widgets + self.voice_widgets:
+            w.setVisible(False)
+            self.grid.removeWidget(w)
+        
+        self.grid.addWidget(self.zoom_btn, 0, 0)
+        self.grid.addWidget(self.reader_btn, 0, 1)
+        self.grid.addWidget(self.voice_btn, 1, 0)
+        self.grid.addWidget(self.settings_btn, 1, 1)
+        self.grid.addWidget(self.exit_btn, 2, 0, 1, 2)
+        
+        self.zoom_btn.setVisible(True)
+        self.reader_btn.setVisible(True)
+        self.voice_btn.setVisible(True)
+        self.settings_btn.setVisible(True)
+        self.exit_btn.setVisible(True)
+
+    # --- Live Settings Refresh ---
+    def check_settings_updates(self):
+        hc = self.settings_manager.get("high_contrast")
+        large = self.settings_manager.get("large_ui")
+        if hc != self._last_hc or large != self._last_large:
+            self.apply_theme_and_scale()
+
+    def apply_theme_and_scale(self):
+        hc = self.settings_manager.get("high_contrast")
+        large = self.settings_manager.get("large_ui")
+        self._last_hc = hc
+        self._last_large = large
+
+        font_size = 24 if large else 14
+        btn_padding = 20 if large else 10
+        
+        if hc:
+            bg_color = "#000000"
+            fg_color = "#FFFF00" # Yellow on Black
+            border_color = "#FFFF00"
+            btn_bg = "#333333"
+        else:
+            bg_color = "#f5f6fa"
+            fg_color = "#2f3640"
+            border_color = "#dcdde1"
+            btn_bg = "white"
+
+        self.setStyleSheet(f"""
+            QWidget {{ background-color: {bg_color}; color: {fg_color}; }}
+            QPushButton {{
+                background-color: {btn_bg};
+                border: 2px solid {border_color};
+                border-radius: 10px;
+                padding: {btn_padding}px;
+                font-size: {font_size}pt;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{ border: 2px solid #3498db; background-color: #ecf0f1; }}
+            QLabel {{ font-size: {font_size - 4}pt; background-color: white; border: 1px solid black; }}
+        """)
+
+        # Override main button colors if NOT in High Contrast
+        if not hc:
+            for btn in [self.zoom_btn, self.reader_btn, self.voice_btn, self.settings_btn, self.exit_btn]:
+                color = btn.property("base_color")
+                btn.setStyleSheet(f"QPushButton {{ background-color: {color}; color: white; border-radius: 10px; font-size: {font_size}pt; font-weight: bold; }}")
+
+    # --- Launching Methods (Unchanged logic, just keeping them) ---
+    def launch_magnifier(self, script_path):
+        if self.magnifier_process and self.magnifier_process.poll() is None:
+            self.magnifier_process.terminate()
+        cmd = [sys.executable, script_path] if not getattr(sys, 'frozen', False) else [sys.executable, "--run-module", script_path.replace('/', '.').replace('.py', '')]
+        self.magnifier_process = subprocess.Popen(cmd, stdin=subprocess.PIPE, text=True)
+
+    def launch_reader(self, script_path):
+        if self.reader_process and self.reader_process.poll() is None:
+            self.reader_process.terminate()
+        cmd = [sys.executable, script_path] if not getattr(sys, 'frozen', False) else [sys.executable, "--run-module", script_path.replace('/', '.').replace('.py', '')]
+        self.reader_process = subprocess.Popen(cmd)
+
+    def start_voice_assistant(self):
+        if self.voice_process is None or self.voice_process.poll() is not None:
+            cmd = [sys.executable, "voice_assistant/ui_assistant.py"] if not getattr(sys, 'frozen', False) else [sys.executable, "--run-module", "voice_assistant.ui_assistant"]
+            self.voice_process = subprocess.Popen(cmd)
+
+    def stop_voice_assistant(self):
+        if self.voice_process and self.voice_process.poll() is None:
+            self.voice_process.terminate()
+            self.voice_process = None
+
+    def open_settings(self):
+        if not self.settings_window or not self.settings_window.isVisible():
+            self.settings_window = SettingsWindow(self.settings_manager)
+            self.settings_window.show()
+
+    def eventFilter(self, obj, event):
+        if isinstance(obj, QPushButton) and not obj.text().startswith("⬅"):
+            if event.type() == QEvent.Enter:
+                self.hover_label.setText(f"Switching context to: {obj.text().splitlines()[-1]}")
+                self.hover_label.setVisible(True)
+            elif event.type() == QEvent.Leave:
+                self.hover_label.setVisible(False)
+        return super().eventFilter(obj, event)
+
+    def closeEvent(self, event):
+        for p in [self.magnifier_process, self.reader_process, self.voice_process]:
+            if p and p.poll() is None: p.terminate()
+        event.accept()
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = AccessibilityApp()
+    window.show()
+    sys.exit(app.exec_())
