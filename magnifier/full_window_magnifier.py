@@ -61,19 +61,21 @@ class FullWindowMagnifier(QWidget):
         self.tray_icon = QSystemTrayIcon(self)
         
         # Load the tray icon
-        self.tray_icon.setIcon(QIcon("icon.png"))
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        icon_path = os.path.join(base_dir, "Images", "Dark themed Logo.jpeg")
+        self.tray_icon.setIcon(QIcon(icon_path) if os.path.exists(icon_path) else QIcon())
         self.tray_icon.setContextMenu(self.tray_menu)
         self.tray_icon.show()
 
         # Listen for std input commands in the background
         threading.Thread(target=self.listen_commands, daemon=True).start()
         
-        # Global Hotkeys
-        keyboard.add_hotkey('ctrl+plus', self.zoom_in)
-        keyboard.add_hotkey('ctrl+=', self.zoom_in)
-        keyboard.add_hotkey('ctrl+add', self.zoom_in)
-        keyboard.add_hotkey('ctrl+-', self.zoom_out)
-        keyboard.add_hotkey('ctrl+subtract', self.zoom_out)
+        # Global Hotkeys (Suppressed to prevent passing to underlying apps like Chrome)
+        keyboard.add_hotkey('ctrl+plus', self.zoom_in, suppress=True)
+        keyboard.add_hotkey('ctrl+=', self.zoom_in, suppress=True)
+        keyboard.add_hotkey('ctrl+add', self.zoom_in, suppress=True)
+        keyboard.add_hotkey('ctrl+-', self.zoom_out, suppress=True)
+        keyboard.add_hotkey('ctrl+subtract', self.zoom_out, suppress=True)
 
     def create_context_menu(self):
         """Builds the system tray menu actions."""

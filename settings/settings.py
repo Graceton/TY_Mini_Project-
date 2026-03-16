@@ -29,7 +29,10 @@ class SettingsManager:
         "high_contrast": False,
         "large_ui": False,
         "invert_magnifier": False,
-        "ocr_language": "eng"
+        "ocr_language": "eng",
+        "startup_magnifier": "None",
+        "startup_reader": "None",
+        "default_hands_free": False
     }
 
     def __init__(self):
@@ -147,6 +150,50 @@ class SettingsWindow(QWidget):
             lambda v: self.manager.set("invert_magnifier", bool(v))
         )
         layout.addWidget(self.invert)
+
+        # ---- STARTUP OPTION ----
+        layout.addWidget(QLabel("Default Magnifier on Startup"))
+        self.startup_mag = QComboBox()
+        self.startup_mag.addItems(["None", "Hover", "Fullscreen", "Window"])
+        
+        # Ensure older config files without this key default properly
+        current_startup = self.manager.get("startup_magnifier")
+        if current_startup not in ["None", "Hover", "Fullscreen", "Window"]:
+            current_startup = "None"
+            self.manager.set("startup_magnifier", current_startup)
+
+        self.startup_mag.setCurrentText(current_startup)
+        self.startup_mag.currentTextChanged.connect(
+            lambda v: self.manager.set("startup_magnifier", v)
+        )
+        layout.addWidget(self.startup_mag)
+
+        # ---- STARTUP OPTION (READER) ----
+        layout.addWidget(QLabel("Default Reader on Startup"))
+        self.startup_reader = QComboBox()
+        self.startup_reader.addItems(["None", "Hover", "Select to Read", "Line-wise", "OCR"])
+        
+        current_reader_startup = self.manager.get("startup_reader")
+        # Handle older missing config files or paragraph rename migration
+        if current_reader_startup == "Paragraph":
+            current_reader_startup = "Select to Read"
+        if current_reader_startup not in ["None", "Hover", "Select to Read", "Line-wise", "OCR"]:
+            current_reader_startup = "None"
+            self.manager.set("startup_reader", current_reader_startup)
+            
+        self.startup_reader.setCurrentText(current_reader_startup)
+        self.startup_reader.currentTextChanged.connect(
+            lambda v: self.manager.set("startup_reader", v)
+        )
+        layout.addWidget(self.startup_reader)
+        
+        # ---- DEFAULT HANDS FREE MODE ----
+        self.hands_free_cb = QCheckBox("Enable Voice Assistant Hands-Free by Default")
+        self.hands_free_cb.setChecked(self.manager.get("default_hands_free"))
+        self.hands_free_cb.stateChanged.connect(
+            lambda v: self.manager.set("default_hands_free", bool(v))
+        )
+        layout.addWidget(self.hands_free_cb)
 
         # ---- OCR LANGUAGE ----
         layout.addWidget(QLabel("OCR Language"))

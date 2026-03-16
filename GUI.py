@@ -22,9 +22,10 @@ if getattr(sys, 'frozen', False):
 
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QPushButton, QVBoxLayout, QLabel,
-    QHBoxLayout, QSizePolicy
+    QHBoxLayout, QSizePolicy, QSystemTrayIcon, QMenu, QAction
 )
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QIcon
+import os
 from PyQt5.QtCore import Qt, QEvent, QPoint, QTimer
 from settings.settings import SettingsManager, SettingsWindow
 
@@ -40,6 +41,9 @@ class AccessibilityApp(QWidget):
         self.all_buttons = [] # Track buttons for live styling
         
         self.initUI()
+        self.setup_tray()
+        self.setup_hotkeys()
+        self.apply_startup_settings()
         
         # Live Polling for UI Settings
         self.ui_timer = QTimer(self)
@@ -393,25 +397,104 @@ class AccessibilityApp(QWidget):
         super().keyPressEvent(event)
 
     def closeEvent(self, event):
+        # Override close to just hide the window to tray instead of exiting
+        event.ignore()
+        self.hide()
+
+    def setup_tray(self):
+        self.tray_icon = QSystemTrayIcon(self)
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Images", "Dark themed Logo.jpeg")
+        self.tray_icon.setIcon(QIcon(icon_path) if os.path.exists(icon_path) else QIcon())
+        
+        tray_menu = QMenu()
+        
+        show_action = QAction("Open Control Panel", self)
+        show_action.triggered.connect(self.showNormal)
+        tray_menu.addAction(show_action)
+        
+        stop_action = QAction("Stop All Features", self)
+        stop_action.triggered.connect(self.stop_all)
+        tray_menu.addAction(stop_action)
+        
+        exit_action = QAction("Exit Optivox", self)
+        exit_action.triggered.connect(self.exit_app)
+        tray_menu.addAction(exit_action)
+        
+        self.tray_icon.setContextMenu(tray_menu)
+        self.tray_icon.show()
+
+    def setup_hotkeys(self):
+        import keyboard
+        try:
+            keyboard.add_hotkey("windows+o", lambda: QTimer.singleShot(0, self.showNormal))
+            keyboard.add_hotkey("windows+=", lambda: QTimer.singleShot(0, self.start_default_magnifier))
+            keyboard.add_hotkey("windows+-", lambda: QTimer.singleShot(0, self.stop_all))
+            keyboard.add_hotkey("ctrl+shift+alt+m", lambda: QTimer.singleShot(0, self.start_default_magnifier))
+            keyboard.add_hotkey("ctrl+shift+alt+r", lambda: QTimer.singleShot(0, self.start_default_reader))
+        except Exception as e:
+            print(f"Failed to bind hotkeys: {e}")
+
+    def start_default_reader(self):
+        reader = self.settings_manager.get("startup_reader")
+        if reader == "Select to Read":
+            self.launch_reader("reader/select_reader.py")
+        elif reader == "Line-wise":
+            self.launch_reader("reader/full_reader.py")
+        elif reader == "OCR":
+            self.launch_reader("reader/ocr_reader.py")
+        else: # "Hover" or "None" default fallback
+            self.launch_reader("reader/hover_reader.py")
+
+    def apply_startup_settings(self):
+        mag = self.settings_manager.get("startup_magnifier")
+        if mag == "Hover":
+            self.launch_magnifier("magnifier/hover_magnifier.py")
+        elif mag == "Fullscreen":
+            self.launch_magnifier("magnifier/full_window_magnifier.py")
+        elif mag == "Window":
+            self.launch_magnifier("magnifier/upper_window_magnifier.py")
+
+    def start_default_magnifier(self):
+        mag = self.settings_manager.get("startup_magnifier")
+        if mag == "Window":
+            self.launch_magnifier("magnifier/upper_window_magnifier.py")
+        elif mag == "Hover":
+            self.launch_magnifier("magnifier/hover_magnifier.py")
+        else:
+            self.launch_magnifier("magnifier/full_window_magnifier.py")
+
+    def stop_all(self):
         if self.magnifier_process and self.magnifier_process.poll() is None:
             try:
                 if self.magnifier_process.stdin:
-                    self.magnifier_process.stdin.write("exit\n")
+                    self.magnifier_process.stdin.write("exit\\n")
                     self.magnifier_process.stdin.flush()
                 self.magnifier_process.wait(timeout=1)
             except subprocess.TimeoutExpired:
                 self.magnifier_process.terminate()
             except Exception:
                 pass
+            self.magnifier_process = None
         if self.reader_process and self.reader_process.poll() is None:
             self.reader_process.terminate()
+            self.reader_process = None
         if self.voice_process and self.voice_process.poll() is None:
             self.voice_process.terminate()
+            self.voice_process = None
+
+    def exit_app(self):
+        self.stop_all()
         if self.settings_window:
             self.settings_window.close()
+        QApplication.quit()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    
+    # Critical for background service: don't exit when the hidden window is "closed"
+    app.setQuitOnLastWindowClosed(False)
+    
     window = AccessibilityApp()
-    window.show()
+    # Notice we removed window.show() -- the app now starts quietly in the background!
+        
     sys.exit(app.exec_())

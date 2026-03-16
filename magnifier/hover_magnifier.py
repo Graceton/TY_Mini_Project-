@@ -9,6 +9,7 @@ from PyQt5.QtGui import QImage, QPixmap, QIcon
 import threading
 import os
 import keyboard
+import ctypes
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from settings.settings import SettingsManager
@@ -27,9 +28,16 @@ class ScreenMagnifier(QWidget):
 
         self.capture = mss.mss()
 
-        self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowTransparentForInput)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setWindowOpacity(0.92)
+        
+        # Exclude this window from screen captures to prevent the "infinity mirror" effect
+        try:
+            hwnd = int(self.winId())
+            ctypes.windll.user32.SetWindowDisplayAffinity(hwnd, 0x00000011) # WDA_EXCLUDEFROMCAPTURE
+        except Exception as e:
+            print("Could not exclude window from capture:", e)
 
         self.label = QLabel(self)
         self.label.setFixedSize(300, 200)
@@ -41,18 +49,20 @@ class ScreenMagnifier(QWidget):
         self.create_context_menu()
 
         self.tray_icon = QSystemTrayIcon(self)
-        self.tray_icon.setIcon(QIcon("icon.png") if os.path.exists("icon.png") else QIcon())
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        icon_path = os.path.join(base_dir, "Images", "Dark themed Logo.jpeg")
+        self.tray_icon.setIcon(QIcon(icon_path) if os.path.exists(icon_path) else QIcon())
         self.tray_icon.setContextMenu(self.tray_menu)
         self.tray_icon.show()
 
         threading.Thread(target=self.listen_commands, daemon=True).start()
         
-        # Global Hotkeys
-        keyboard.add_hotkey('ctrl+plus', self.zoom_in)
-        keyboard.add_hotkey('ctrl+=', self.zoom_in)
-        keyboard.add_hotkey('ctrl+add', self.zoom_in)
-        keyboard.add_hotkey('ctrl+-', self.zoom_out)
-        keyboard.add_hotkey('ctrl+subtract', self.zoom_out)
+        # Global Hotkeys (Suppressed to prevent passing to underlying apps like Chrome)
+        keyboard.add_hotkey('ctrl+plus', self.zoom_in, suppress=True)
+        keyboard.add_hotkey('ctrl+=', self.zoom_in, suppress=True)
+        keyboard.add_hotkey('ctrl+add', self.zoom_in, suppress=True)
+        keyboard.add_hotkey('ctrl+-', self.zoom_out, suppress=True)
+        keyboard.add_hotkey('ctrl+subtract', self.zoom_out, suppress=True)
 
     def create_context_menu(self):
         self.tray_menu = QMenu(self)
@@ -128,6 +138,7 @@ class ScreenMagnifier(QWidget):
             frame = cv2.bitwise_not(frame)
 
         magnified = cv2.resize(frame, (target_w, target_h), interpolation=cv2.INTER_LINEAR)
+        cv2.rectangle(magnified, (0, 0), (target_w - 1, target_h - 1), (0, 255, 0), 2)
         magnified = cv2.cvtColor(magnified, cv2.COLOR_BGR2RGB)
 
         height, width, channel = magnified.shape
@@ -136,17 +147,8 @@ class ScreenMagnifier(QWidget):
         qImg = QImage(magnified.data, width, height, bytesPerLine, QImage.Format_RGB888)
         self.label.setPixmap(QPixmap.fromImage(qImg))
 
-        # Window position slightly offset from cursor
-        offset_x = 30
-        offset_y = 30
-
-        if mx + offset_x + target_w > screen_w:
-            offset_x = -target_w - 30
-
-        if my + offset_y + target_h > screen_h:
-            offset_y = -target_h - 30
-
-        self.move(mx + offset_x, my + offset_y)
+        # Window position centered on cursor
+        self.move(mx - target_w // 2, my - target_h // 2)
 
     def zoom_in(self):
         self.scale_factor = min(self.scale_factor + self.zoom_increment, 10)

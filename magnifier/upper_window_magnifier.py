@@ -8,6 +8,7 @@ import cv2
 import threading
 import sys
 import os
+import ctypes
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from settings.settings import SettingsManager
@@ -39,6 +40,13 @@ class UpperWindowMagnifier(QWidget):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
+        # Exclude this window from screen captures to prevent the "infinity mirror" effect
+        try:
+            hwnd = int(self.winId())
+            ctypes.windll.user32.SetWindowDisplayAffinity(hwnd, 0x00000011) # WDA_EXCLUDEFROMCAPTURE
+        except Exception as e:
+            print("Could not exclude window from capture:", e)
+
         # Label to show magnified region
         self.label = QLabel(self)
         self.label.resize(self.width_size, self.height_size)
@@ -69,7 +77,9 @@ class UpperWindowMagnifier(QWidget):
                 break
 
     def create_tray_icon(self):
-        self.tray_icon = QSystemTrayIcon(QIcon("icon.png"), self)
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        icon_path = os.path.join(base_dir, "Images", "Dark themed Logo.jpeg")
+        self.tray_icon = QSystemTrayIcon(QIcon(icon_path) if os.path.exists(icon_path) else QIcon(), self)
         self.tray_menu = QMenu()
 
         zoom_in_action = QAction("Zoom In", self)

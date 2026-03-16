@@ -8,9 +8,11 @@ import pygame
 import speech_recognition as sr
 import pyttsx3
 import tempfile
+import keyboard
 
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton, QTextBrowser, QLabel, QCheckBox
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton, QTextBrowser, QLabel, QCheckBox,
+    QHBoxLayout, QLineEdit
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont
@@ -138,24 +140,41 @@ class BotWorker(QThread):
     processing_status = pyqtSignal(str) # Status updates
     finished_processing = pyqtSignal(str) # Path to the bot audio file to play
     error_signal = pyqtSignal(str)
+    command_signal = pyqtSignal(str) # Emitted on predefined commands
 
-    def __init__(self, chatbot, input_audio_path):
+    def __init__(self, chatbot, input_audio_path=None, input_text=None):
         super().__init__()
         self.chatbot = chatbot
         self.input_audio_path = input_audio_path
+        self.input_text = input_text
 
     def run(self):
         try:
-            self.processing_status.emit("Transcribing...")
-            
-            # Step 1: STT
-            transcribed_text = self.chatbot.transcribe_audio(self.input_audio_path)
-            if not transcribed_text:
-                self.error_signal.emit("Transcription failed or no speech detected.")
+            if self.input_text:
+                transcribed_text = self.input_text
+            else:
+                self.processing_status.emit("Transcribing...")
+                
+                # Step 1: STT
+                transcribed_text = self.chatbot.transcribe_audio(self.input_audio_path)
+                if not transcribed_text:
+                    self.error_signal.emit("Transcription failed or no speech detected.")
+                    return
+
+            # Check for predefined commands
+            lower_text = transcribed_text.lower()
+            if any(cmd in lower_text for cmd in ["start magnifier", "open magnifier", "turn on magnifier","magnifier","activate magnifier","magnify"]):
+                self.update_chat.emit("You", transcribed_text)
+                self.command_signal.emit("magnifier")
+                return
+                
+            if any(cmd in lower_text for cmd in ["start reader", "open reader", "turn on reader","reader","activate reader","read"]):
+                self.update_chat.emit("You", transcribed_text)
+                self.command_signal.emit("reader")
                 return
 
             self.update_chat.emit("You", transcribed_text)
-            self.processing_status.emit("Thinking...")
+            self.processing_status.emit("Okay...")
 
             # Step 2: Get chat response
             response_data = self.chatbot.get_chat_response(transcribed_text)
@@ -200,6 +219,11 @@ class VoiceAssistantUI(QMainWindow):
         self.playback_finished.connect(self.resume_dormancy)
         self.initUI()
         
+        # Check settings for auto hands-free
+        if self.settings_manager.get("default_hands_free"):
+            self.hands_free_cb.setChecked(True)
+            self.start_wake_word_listener()
+        
     def initUI(self):
         self.setWindowTitle("Optivox Voice Assistant")
         self.setGeometry(300, 300, 500, 650)
@@ -237,6 +261,43 @@ class VoiceAssistantUI(QMainWindow):
         """)
         self.chat_browser.append("<b>System:</b> Voice Assistant initialized.<br><i>Click the button to speak, or enable Hands-Free mode to automatically wake up on 'Hey Optivox'.</i>")
         layout.addWidget(self.chat_browser)
+        
+        # Text Input Box
+        input_layout = QHBoxLayout()
+        self.text_input = QLineEdit()
+        self.text_input.setPlaceholderText("Type a command or question...")
+        self.text_input.setFont(QFont("Arial", 12))
+        self.text_input.setStyleSheet("""
+            QLineEdit {
+                background-color: #34495e;
+                color: white;
+                border: 2px solid #7f8c8d;
+                border-radius: 5px;
+                padding: 10px;
+            }
+        """)
+        self.text_input.returnPressed.connect(self.handle_text_submit)
+        
+        self.send_btn = QPushButton("Send")
+        self.send_btn.setFont(QFont("Arial", 12, QFont.Bold))
+        self.send_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px 20px;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+        """)
+        self.send_btn.clicked.connect(self.handle_text_submit)
+        
+        input_layout.addWidget(self.text_input)
+        input_layout.addWidget(self.send_btn)
+        
+        layout.addLayout(input_layout)
         
         # Record Button
         self.record_btn = QPushButton("🎙️ Click to Auto-Record")
@@ -301,6 +362,8 @@ class VoiceAssistantUI(QMainWindow):
         """Triggered when the user manually pushes the button."""
         self.stop_playback()
         self.stop_wake_word_listener() # Interrupt hands-free if manually interacting
+        self.text_input.setEnabled(False)
+        self.send_btn.setEnabled(False)
         self.start_auto_recording(triggered_by_wake=False)
 
     def start_auto_recording(self, triggered_by_wake=False):
@@ -324,14 +387,55 @@ class VoiceAssistantUI(QMainWindow):
         self.record_btn.setStyleSheet("QPushButton { background-color: #27ae60; color: white; border-radius: 20px; padding: 20px; }")
         
         if saved_path and os.path.exists(saved_path):
-            self.worker = BotWorker(self.chatbot, saved_path)
+            self.worker = BotWorker(self.chatbot, input_audio_path=saved_path)
             self.worker.update_chat.connect(self.append_chat)
             self.worker.processing_status.connect(self.update_status)
             self.worker.finished_processing.connect(self.play_response)
             self.worker.error_signal.connect(self.handle_error)
+            self.worker.command_signal.connect(self.handle_voice_command)
             self.worker.start()
         else:
             self.handle_error("No audio recorded.")
+
+    def handle_text_submit(self):
+        text = self.text_input.text().strip()
+        if not text:
+            return
+            
+        self.text_input.clear()
+        
+        self.stop_playback()
+        self.stop_wake_word_listener()
+        
+        self.text_input.setEnabled(False)
+        self.send_btn.setEnabled(False)
+        
+        self.status_label.setText("Processing Text...")
+        self.status_label.setStyleSheet("color: #f1c40f; padding: 10px;")
+        
+        self.record_btn.setEnabled(False)
+        self.record_btn.setText("⏳ Processing...")
+        self.record_btn.setStyleSheet("QPushButton { background-color: #27ae60; color: white; border-radius: 20px; padding: 20px; }")
+        
+        self.worker = BotWorker(self.chatbot, input_text=text)
+        self.worker.update_chat.connect(self.append_chat)
+        self.worker.processing_status.connect(self.update_status)
+        self.worker.finished_processing.connect(self.play_response)
+        self.worker.error_signal.connect(self.handle_error)
+        self.worker.command_signal.connect(self.handle_voice_command)
+        self.worker.start()
+
+    def handle_voice_command(self, cmd):
+        if cmd == "magnifier":
+            self.append_chat("System", "Starting magnifier...")
+            keyboard.send("ctrl+shift+alt+m")
+            threading.Thread(target=LocalTTS.speak, args=("Starting magnifier.",), daemon=True).start()
+        elif cmd == "reader":
+            self.append_chat("System", "Starting text reader...")
+            keyboard.send("ctrl+shift+alt+r")
+            threading.Thread(target=LocalTTS.speak, args=("Starting reader.",), daemon=True).start()
+            
+        threading.Timer(1.0, self.playback_finished.emit).start()
 
     def append_chat(self, role, message):
         color = "#3498db" if role == "You" else "#2ecc71"
@@ -409,6 +513,9 @@ class VoiceAssistantUI(QMainWindow):
                     padding: 20px;
                 }
             """)
+        # We need to ensure text input is always enabled when dormant
+        self.text_input.setEnabled(True)
+        self.send_btn.setEnabled(True)
 
     def closeEvent(self, event):
         self.stop_wake_word_listener()
