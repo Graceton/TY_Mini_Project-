@@ -11,6 +11,6 @@
     "invert_magnifier": false,
     "ocr_language": "eng",
     "startup_magnifier": "Hover",
-    "startup_reader": "Select to Read",
+    "startup_reader": "OCR",
     "default_hands_free": true
 }

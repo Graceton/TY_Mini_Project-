@@ -1,1 +1,4 @@
 .venv\Scripts\activate
+py GUI.py
+py -m pip install opencv-python PyQt5 pytesseract pyttsx3 pyautogui numpy keyboard pyperclip requests sounddevice google-genai
+pip install SpeechRecognition sounddevice pyttsx3 numpy opencv-python pyautogui mss PyQt5 keyboard pyperclip requests
