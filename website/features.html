@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Optivox | Features</title>
+  <title>Optivox | How to Use</title>
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -229,7 +229,7 @@
     <div>
       <a href="index.html">Home</a>
       <a href="about.html">About</a>
-      <a href="features.html" class="active">Features</a>
+      <a href="features.html" class="active">How to Use</a>
       <a href="downloads.html">Downloads</a>
       <a href="team.html">Team</a>
     </div>
@@ -237,33 +237,49 @@
 
   <!-- HERO -->
   <section class="hero">
-    <h1>Key Features of Optivox</h1>
-    <p>Discover the accessibility-focused modules that make Optivox a seamless tool for visually impaired users.</p>
+    <h1>Mastering Optivox</h1>
+    <p>Everything you need to know about setting up and using Optivox efficiently.</p>
   </section>
 
-  <!-- FEATURE CARDS -->
-  <section class="cards-section">
-    <div class="card">
-      <h3>🔍 Real-time Magnifier</h3>
-      <p>Smooth zoom control with no lag or flicker, powered by OpenCV.</p>
+  <!-- USER MANUAL SECTION -->
+  <section id="user-manual" style="padding: 40px 10%; background: var(--bg-card); margin: 40px 10%; border-radius: 20px; border: 1px solid rgba(0,255,204,0.1);">
+    <h2 style="color: var(--accent); margin-bottom: 25px; text-align: center;">📖 Official User Manual</h2>
+    
+    <div style="margin-bottom: 30px;">
+        <h3 style="color: var(--accent); margin-bottom: 10px;">🚀 First-Time Setup</h3>
+        <p style="color: var(--text-soft);">1. <strong>Extract Download:</strong> Right-click the <kbd>.zip</kbd> and select "Extract All".</p>
+        <p style="color: var(--text-soft);">2. <strong>Run GUI:</strong> Open the folder and run <kbd>GUI.exe</kbd>.</p>
+        <p style="color: var(--text-soft);">3. <strong>Security Prompt:</strong> If Windows warns you, click <em>"More info"</em> and <em>"Run anyway"</em>.</p>
     </div>
-    <div class="card">
-      <h3>🗣 Text-to-Speech</h3>
-      <p>Reads out selected or hovered text instantly using pyttsx3 offline voices.</p>
+
+    <div style="margin-bottom: 30px;">
+        <h3 style="color: var(--accent); margin-bottom: 15px;">⌨️ Keyboard Shortcuts</h3>
+        <ul style="list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <li style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;"><b>Win + O</b>: Control Panel</li>
+            <li style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;"><b>Win + =</b>: Start Magnifier</li>
+            <li style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;"><b>Win + -</b>: Stop All Features</li>
+            <li style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;"><b>Ctrl + Shift + Alt + R</b>: Reader</li>
+            <li style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;"><b>Ctrl + / -</b>: Adjust Zoom</li>
+            <li style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;"><b>Esc</b>: Reset Zoom</li>
+        </ul>
     </div>
-    <div class="card">
-      <h3>📶 OCR Engine</h3>
-      <p>Recognizes on-screen text with Tesseract OCR in real time.</p>
+
+    <div style="margin-bottom: 30px;">
+        <h3 style="color: var(--accent); margin-bottom: 10px;">🎙️ Voice Assistant</h3>
+        <p style="color: var(--text-soft);">Say <strong>"Hey Optivox"</strong> to wake the assistant, then follow up with commands like <em>"Start Magnifier"</em> or <em>"Open Reader"</em>.</p>
     </div>
-    <div class="card">
-      <h3>🧩 Offline Voice Assistant</h3>
-      <p>Execute commands like “Read screen” or “Open magnifier” without internet.</p>
-    </div>
-    <div class="card">
-      <h3>⚙ Customization</h3>
-      <p>Modify voice, speed, pitch, color theme, and magnification preferences.</p>
+
+    <div>
+        <h3 style="color: var(--accent); margin-bottom: 10px;">🎨 Navigation Color Scheme</h3>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <span style="background: #3498db; padding: 5px 10px; border-radius: 5px; color: white;">Blue: Zoom</span>
+            <span style="background: #2ecc71; padding: 5px 10px; border-radius: 5px; color: white;">Green: Reader</span>
+            <span style="background: #e74c3c; padding: 5px 10px; border-radius: 5px; color: white;">Red: Voice</span>
+            <span style="background: #7c37cd; padding: 5px 10px; border-radius: 5px; color: white;">Purple: Settings</span>
+        </div>
     </div>
   </section>
+
 
   <!-- FOOTER -->
   <footer>

@@ -1,2 +1,1 @@
-py -m pip install opencv-python PyQt5 pytesseract pyttsx3 pyautogui numpy keyboard pyperclip requests sounddevice google-genai
-pip install SpeechRecognition sounddevice pyttsx3 numpy opencv-python pyautogui mss PyQt5 keyboard pyperclip requests
+Excluded from Git: Always add the *.zip to your .gitignore so the 140MB+ file is safely ignored by Git.
