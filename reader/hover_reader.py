@@ -10,11 +10,32 @@ from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from pytesseract import Output
 import time
 import os
+import queue
+import threading
+import subprocess
+import pyperclip
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from settings.settings import SettingsManager
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+class PowerShellTTSWorker(threading.Thread):
+    def __init__(self):
+        super().__init__(daemon=True)
+        self.q = queue.Queue()
+        
+    def run(self):
+        while True:
+            text = self.q.get()
+            if text is None: break
+            
+            # Escape quotes for PowerShell
+            safe_text = text.replace("'", "''").replace('"', '""')
+            cmd = f"Add-Type -AssemblyName System.Speech; (New-Object System.Speech.Synthesis.SpeechSynthesizer).Speak('{safe_text}');"
+            subprocess.run(["powershell", "-WindowStyle", "Hidden", "-Command", cmd], creationflags=0x08000000)
+            
+            self.q.task_done()
 
 class HoverReaderThread(QThread):
     update_text = pyqtSignal(str)
@@ -23,19 +44,12 @@ class HoverReaderThread(QThread):
         super().__init__()
         self.settings = SettingsManager()
         self.running = True
-        self.engine = pyttsx3.init()
-        self.engine.setProperty('rate', self.settings.get("speech_rate"))
-        self.engine.setProperty('volume', self.settings.get("speech_volume"))
+        self.tts_worker = PowerShellTTSWorker()
+        self.tts_worker.start()
         self.last_text = ""
         self.interval = 0.5  # Faster scanning since we only read one word
 
     def run(self):
-        try:
-            import pythoncom
-            pythoncom.CoInitialize()
-        except ImportError:
-            pass
-
         while self.running:
             mx, my = pyautogui.position()
             
@@ -78,8 +92,19 @@ class HoverReaderThread(QThread):
                 if hovered_word and hovered_word != self.last_text:
                     self.last_text = hovered_word
                     self.update_text.emit(hovered_word)
-                    self.engine.say(hovered_word)
-                    self.engine.runAndWait()
+                    
+                    # Auto copy to clipboard as requested by user
+                    pyperclip.copy(hovered_word)
+                    
+                    # Prevent overlap by clearing queue
+                    while not self.tts_worker.q.empty():
+                        try:
+                            self.tts_worker.q.get_nowait()
+                            self.tts_worker.q.task_done()
+                        except queue.Empty:
+                            break
+                            
+                    self.tts_worker.q.put(hovered_word)
 
             except Exception:
                 pass
@@ -88,7 +113,7 @@ class HoverReaderThread(QThread):
 
     def stop(self):
         self.running = False
-        self.engine.stop()
+        self.tts_worker.q.put(None)
 
 class HoverReader(QWidget):
     def __init__(self):
